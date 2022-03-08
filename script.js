@@ -5,27 +5,36 @@ const svg = d3.select('svg')
     .attr('width', width)
     .attr('height', height);
 
-let data;
-let xColumn;
-let yColumn;
+const ParameterMenu = (some_parameter, props) =>{
+    const {
+        options,
+        onOptionClicked
+    } = props;
 
-const onXColumnClicked = column => {
-    xColumn = column;
-    render();
+    let select = some_parameter.selectAll('select').data([null]);
+    select = select.enter().append('select').merge(select)
+    .on('change', function(){
+        onOptionClicked(this.value);
+    });
+    
+    const option = select.selectAll('option').data(options);
+    option.enter().append('option').merge(option)
+    .attr('value',d=>d)
+    .text(d => d);
 }
-const onYColumnClicked = column => {
-    yColumn = column;
-    render();
-}
 
-const render = data => {
-    const title = "g4run Analysis";
-    const circleRadius = 10;
-
-    const xValue = d => d.cycles;
-    const xAxisLabel = 'Cycles';
-    const yValue = d => d.instructions;
-    const yAxisLabel = 'Instructions';
+const scatterPlot = (parameters, props) => {
+    const{
+        title ,
+        xValue,
+        xAxisLabel,
+        yValue,
+        yAxisLabel,
+        circleRadius,
+        width,
+        height,
+        data
+    } = props;
 
     const xScale = d3.scaleLinear()
         .domain(d3.extent(data,xValue))
@@ -37,7 +46,9 @@ const render = data => {
         .range([height*0.8,0])
         .nice();
 
-    const g = svg.append('g');
+    const g = parameters.selectAll('.container').data([null]);
+    const gEnter = g.enter().append('g').attr('class','container');
+    gEnter.merge(g);
 
     const xAxis = d3.axisBottom(xScale)
         .tickSize(height*0.8)
@@ -46,12 +57,16 @@ const render = data => {
         .tickSize(width*0.8)
         .tickPadding(5);
 
-    const xAxisG = g.append('g').call(xAxis)
-        .attr('transform',`translate(${width*0.08},${height*0.05})`);
-    const yAxisG = g.append('g').call(yAxis)
-        .attr('transform',`translate(${width*0.88},${height*0.05})`); 
-    
-    
+    const yAxisG = g.select('.y-parameter');
+    const yAxisGEnter = gEnter.append('g').attr('class','y-parameter')   
+    yAxisG.merge(yAxisGEnter).call(yAxis)
+    .attr('transform',`translate(${width*0.9},${height*0.05})`);
+
+    const xAxisG = g.select('.x-parameter');
+    const xAxisGEnter = gEnter.append('g').attr('class','x-parameter')   
+    xAxisG.merge(xAxisGEnter).call(xAxis)
+    .attr('transform',`translate(${width*0.1},${height*0.05})`);
+
     const tooltip = d3.select(".tool")
         .append("div")
         .style("opacity", 0)
@@ -64,8 +79,9 @@ const render = data => {
         .style("position","absoulute")
         .attr("transform",`translate(0,-1000)`);
 
-    g.selectAll('circle').data(data)
-        .enter().append('circle')
+    const circles = g.merge(gEnter).selectAll('circle').data(data);
+    circles
+        .enter().append('circle').merge(circles)
             .attr('cx', d => xScale(xValue(d)))
             .attr('cy', d => yScale(yValue(d)))
             .attr('r',circleRadius)
@@ -91,7 +107,45 @@ const render = data => {
 
 }
 
-d3.csv('geant4.csv').then(data => {
+let data;
+let xColumn;
+let YColumn;
+const onXColumnClicked = column => {
+    xColumn = column;
+    render();
+ }
+const onYColumnClicked = column => {
+    YColumn = column;
+    render();
+}
+
+const render = () => {
+
+    d3.select('#x-parameter').call(  ParameterMenu, {
+        options : data.columns,
+        onOptionClicked: onXColumnClicked
+    });
+
+    d3.select('#y-parameter').call(  ParameterMenu, {
+        options : data.columns,
+        onOptionClicked: onYColumnClicked
+    });
+
+    svg.call(scatterPlot, {
+        title: "Something",
+        xValue: d => d[xColumn],
+        xAxisLabel: 'X-AXIS-LABEL',
+        yValue: d => d[YColumn],
+        yAxisLabel: 'Y-AXIS-LABEL',
+        circleRadius: 10,
+        width,
+        height,
+        data
+    });
+}
+
+d3.csv('geant4.csv').then(file_data => {
+    data = file_data;
     data.forEach(d => {
         d.dso = new String(d.dso);
         d.symbol = new String(d.symbol);
@@ -100,5 +154,7 @@ d3.csv('geant4.csv').then(data => {
         d.branches = +d.branches;
         d.branch_misses = +d.branch_misses;
     });
-    render(data);
+    xColumn = data.columns[0];
+    YColumn = data.columns[0];
+    render();
 });
