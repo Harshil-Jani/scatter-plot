@@ -1,0 +1,13 @@
+body{
+    margin: 10;
+    overflow-y: hidden;
+    width: 100%;
+}
+circle{
+    fill: violet;
+    opacity: 0.3;
+}
+.tool{
+    position: absolute;
+    
+}
