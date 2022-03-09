@@ -7,14 +7,35 @@ circle{
 }
 .tool{
     position: absolute; 
+    width: 300px;
+    right : 0;
+    bottom : 0;
+}
+#Parameters{
+    justify-content: center;
+    align-items: center;
+    margin: 10px;
 }
 .legend{
     position: absolute;
-    font-size: 100%;
+    bottom: 10px;
+    left: 20px;
+    width: 700px;
+    height: 75px;
+    font-size: 80%;
+    display: none;
+}
+.legend-active{
+    background-color: antiquewhite;
+    padding: 5px;
+    border-radius: 5px;
+    color: brown;
 }
 .axis-label{
     font-size: 200%;
 }
+
+/* Library Based Colour Differntiation */
 .libG4clhep{
     fill : red;
 }

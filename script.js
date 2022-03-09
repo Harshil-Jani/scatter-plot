@@ -1,11 +1,30 @@
 import * as d3 from "https://cdn.skypack.dev/d3@7";
-const width = window.innerWidth*0.95;
-const height = window.innerHeight*0.95;
+const width = 1000;
+const height = 500;
+
+const legend_div = d3.select('.legend')
+const legend_activate = d3.select('.legend-active')
+    .on("mouseover", () => {
+        legend_div.style('display', 'block')
+    })
+    .on("mouseleave", () => {
+        legend_div.style("display", 'none')
+    })
+
 const svg = d3.select('svg')
     .attr('width', width)
     .attr('height', height);
 
-const ParameterMenu = (some_parameter, props) =>{
+const legend = d3.select(".legend")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "1px")
+    .style("border-radius", "5px")
+    .style("padding", "5px")
+    .style("position", "absoulute")
+    .html("<h2>Geant4 Libraries</h2>🟥libG4clhep | 🟩libG4geometry | 🟨libG4event | ⬛libG4particles | 🟫libG4processes | 🟦libG4track | 🟧libG4tracking | 🟪Others");
+
+const ParameterMenu = (some_parameter, props) => {
     const {
         options,
         onOptionClicked,
@@ -14,128 +33,125 @@ const ParameterMenu = (some_parameter, props) =>{
 
     let select = some_parameter.selectAll('select').data([null]);
     select = select.enter().append('select').merge(select)
-    .on('change', function(){
-        onOptionClicked(this.value);
-    });
-    
+        .on('change', function () {
+            onOptionClicked(this.value);
+        });
+
     const option = select.selectAll('option').data(options);
     option.enter().append('option').merge(option)
-    .attr('value',d=>d)
-    .property('selected', d => d === selectedOption)
-    .text(d => d);
+        .attr('value', d => d)
+        .property('selected', d => d === selectedOption)
+        .text(d => d);
 }
 
 const scatterPlot = (parameters, props) => {
-    const{
-        title ,
+    const {
         xValue,
         xAxisLabel,
         yValue,
         yAxisLabel,
-        circleRadius,
+        margin,
         width,
         height,
         data
     } = props;
 
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
     const xScale = d3.scaleLinear()
-        .domain(d3.extent(data,xValue))
-        .range([0,width*0.8])
+        .domain(d3.extent(data, xValue))
+        .range([0, innerWidth])
         .nice();
 
     const yScale = d3.scaleLinear()
-        .domain(d3.extent(data,yValue))
-        .range([height*0.8,0])
+        .domain(d3.extent(data, yValue))
+        .range([innerHeight, 0])
         .nice();
 
     const g = parameters.selectAll('.container').data([null]);
-    const gEnter = g.enter().append('g').attr('class','container');
-    gEnter.merge(g);
+    const gEnter = g.enter().append('g').attr('class', 'container');
+    gEnter.merge(g).attr('transform',
+        `translate(${margin.left},${margin.top})`
+    );
+    
+    const xAxisTickFormat = number => {
+        if (typeof (number) == "number") {
+            return number + 'B';
+        }
+        return number;
+    };
+    const yAxisTickFormat = number => {
+        if (typeof (number) == "number") {
+            return number + 'B';
+        }
+        return number;
+    };
 
     const xAxis = d3.axisBottom(xScale)
-        .tickSize(height*0.8)
-        .tickPadding(5);
+        .tickFormat(xAxisTickFormat)
+        .tickSize(-innerHeight)
+        .tickPadding(15);
     const yAxis = d3.axisLeft(yScale)
-        .tickSize(width*0.8)
-        .tickPadding(5);
-
-    const yAxisG = g.select('.y-parameter');
-    const yAxisGEnter = gEnter.append('g').attr('class','y-parameter')   
-    yAxisG.merge(yAxisGEnter).call(yAxis)
-    .attr('transform',`translate(${width*0.9},${height*0.05})`);
+        .tickFormat(yAxisTickFormat)
+        .tickSize(-innerWidth)
+        .tickPadding(15);
 
     const xAxisG = g.select('.x-parameter');
-    const xAxisGEnter = gEnter.append('g').attr('class','x-parameter')   
-    xAxisG.merge(xAxisGEnter).call(xAxis)
-    .attr('transform',`translate(${width*0.1},${height*0.05})`);
+    const xAxisGEnter = gEnter.append('g').attr('class', 'x-parameter')
+    xAxisG.merge(xAxisGEnter).attr('transform', `translate(0,${innerHeight})`).call(xAxis);
+    
+    const yAxisG = g.select('.y-parameter');
+    const yAxisGEnter = gEnter.append('g').attr('class', 'y-parameter')
+    yAxisG.merge(yAxisGEnter).call(yAxis);
 
     const xAxisLabelText = xAxisGEnter.append('text')
-        .attr('class','axis-label')
-        .attr('fill','black')
+        .attr('class', 'axis-label')
+        .attr('fill', 'black')
+        .attr('y', 75)
         .merge(xAxisG.select('.axis-label'))
-        .attr('x',width/2.5)
-        .attr('y',height/1.1)
+        .attr('x', innerWidth / 2)
         .text(xAxisLabel);
     const yAxisLabelText = yAxisGEnter.append('text')
-        .attr('class','axis-label')
-        .attr('fill','black')
+        .attr('class', 'axis-label')
+        .attr('fill', 'black')
+        .attr('y', -93)
+        .attr('fill', 'black')
+        .attr('transform', 'rotate(-90)')
+        .attr('text-anchor', 'middle')
         .merge(yAxisG.select('.axis-label'))
-        .attr('x',width/4)
-        .attr('y',height*1.7)
+        .attr('x', -innerHeight / 2)
         .text(yAxisLabel)
-        .attr('transform','rotate(90)');
 
     const tooltip = d3.select(".tool")
-        .append("div")
         .style("opacity", 0)
-        .attr("class", "tooltip")
         .style("background-color", "white")
         .style("border", "solid")
         .style("border-width", "1px")
         .style("border-radius", "5px")
         .style("padding", "10px")
-        .style("position","absoulute")
-        .attr("transform",`translate(0,-1000)`);
 
-    const legend = d3.select(".legend")
-        .append("div")
-        .attr("class","legend")
-        .style('margin-left',width*0.91+'px')
-        .style('margin-top',height*0.3+'px')
-        .style("background-color", "white")
-        .style("border", "solid")
-        .style("border-width", "1px")
-        .style("border-radius", "5px")
-        .style("padding", "5px")
-        .style("position","absoulute")
-        .html("<h2>Geant4_Libraries</h2>🟥libG4clhep<br>🟩libG4geometry<br>🟨libG4event<br>⬛libG4particles<br>🟫libG4processes<br>🟦libG4track<br>🟧libG4tracking<br>🟪Others");
     const circles = g.merge(gEnter).selectAll('circle').data(data);
-    circles
-        .enter().append('circle').merge(circles)
-            .attr('cx', d => xScale(xValue(d)))
-            .attr('cy', d => yScale(yValue(d)))
-            .attr('r',d => d.cycles/65000000000)
-            .attr('class', d => d.dso.slice(0,-3))
-            .attr('transform',`translate(${width*0.1001},${height*0.05})`)
-            .on("mouseover", (event,d) => {
-                const [x,y] = d3.pointer(event);
-                tooltip
-                    .style("opacity", 1)
-                    .style("margin-left",(x)+"px")
-                    .style("margin-top",(y)+"px");
-
-            })
-            .on("mousemove", (event,d) => {
-                tooltip
-                    .html("DSO : " + d.dso + "<br>Symbol : " + d.symbol + "<br>Cycles : " + d.cycles + "<br>Instructions : "+ d.instructions + "<br>Branches : " + d.branches + "<br>Branch Misses : " + d.branch_misses)
-            })
-            .on("mouseleave", (event,d) => {
-                tooltip
-                    .transition()
-                    .duration(3000)
-                    .style("opacity", 0)
-            });
-
+    circles.enter().append('circle').merge(circles)
+        .attr('r', d => d.cycles / 100)
+        .attr('cy', d => yScale(yValue(d)))
+        .attr('cx', d => xScale(xValue(d)))
+        .attr('class', d => d.dso.slice(0, -3))
+        .on("mouseover", (event, d) => {
+            tooltip
+                .style("opacity", 1)
+        })
+        .on("mousemove", (event, d) => {
+            console.log(d);
+            tooltip
+                .html("DSO : " + d.dso + "<br>Symbol : " + d.symbol + "<br>Cycles : " + d.cycles + "B<br>Instructions : " + d.instructions + "B<br>Branches : " + d.branches + "B<br>Branch Misses : " + d.branch_misses + "B")
+        })
+        .on("mouseleave", (event, d) => {
+            tooltip
+                .transition()
+                .duration(500)
+                .style("opacity", 0)
+        });
 }
 
 let data;
@@ -144,7 +160,7 @@ let YColumn;
 const onXColumnClicked = column => {
     XColumn = column;
     render();
- }
+}
 const onYColumnClicked = column => {
     YColumn = column;
     render();
@@ -152,14 +168,14 @@ const onYColumnClicked = column => {
 
 const render = () => {
 
-    d3.select('#x-parameter').call(  ParameterMenu, {
-        options : data.columns,
+    d3.select('#x-parameter').call(ParameterMenu, {
+        options: data.columns,
         onOptionClicked: onXColumnClicked,
         selectedOption: XColumn
     });
 
-    d3.select('#y-parameter').call(  ParameterMenu, {
-        options : data.columns,
+    d3.select('#y-parameter').call(ParameterMenu, {
+        options: data.columns,
         onOptionClicked: onYColumnClicked,
         selectedOption: YColumn
     });
@@ -167,10 +183,10 @@ const render = () => {
     svg.call(scatterPlot, {
         title: "Something",
         xValue: d => d[XColumn],
-        xAxisLabel: XColumn,
+        xAxisLabel: XColumn + " (in Billions)",
         yValue: d => d[YColumn],
-        yAxisLabel: YColumn,
-        circleRadius: 7,
+        yAxisLabel: YColumn + " (in Billions)",
+        margin: { top: 10, right: 40, bottom: 88, left: 150 },
         width,
         height,
         data
@@ -182,12 +198,12 @@ d3.csv('geant4.csv').then(file_data => {
     data.forEach(d => {
         d.dso = new String(d.dso);
         d.symbol = new String(d.symbol);
-        d.cycles = +d.cycles;
-        d.instructions = +d.instructions;
-        d.branches = +d.branches;
-        d.branch_misses = +d.branch_misses;
+        d.cycles = +d.cycles / 1000000000;
+        d.instructions = +d.instructions / 1000000000;
+        d.branches = +d.branches / 1000000000;
+        d.branch_misses = +d.branch_misses / 1000000000;
     });
     XColumn = data.columns[3];
     YColumn = data.columns[4];
     render();
-});
+})
