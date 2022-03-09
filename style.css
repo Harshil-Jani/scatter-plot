@@ -1,13 +1,38 @@
 body{
-    margin: 10;
-    overflow-y: hidden;
+    margin: 0;
     width: 100%;
 }
 circle{
     fill: violet;
-    opacity: 0.3;
 }
 .tool{
+    position: absolute; 
+}
+.legend{
     position: absolute;
-    
+    font-size: 100%;
+}
+.axis-label{
+    font-size: 200%;
+}
+.libG4clhep{
+    fill : red;
+}
+.libG4geometry{
+    fill : green;
+}
+.libG4event{
+    fill : yellow;
+}
+.libG4particles{
+    fill : black;
+}
+.libG4processes{
+    fill : rgb(150, 103, 50);
+}
+.libG4track{
+    fill : blue;
+}
+.libG4tracking{
+    fill : orange;
 }
