@@ -57,3 +57,7 @@ circle{
 .libG4tracking{
     fill : orange;
 }
+
+option:empty{
+    display: none;
+}

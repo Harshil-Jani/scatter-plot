@@ -39,9 +39,22 @@ const ParameterMenu = (some_parameter, props) => {
 
     const option = select.selectAll('option').data(options);
     option.enter().append('option').merge(option)
-        .attr('value', d => d)
+        .attr('value', d => {
+            if(d!="comm" && d!="dso" && d!="symbol"){
+                return d;
+            }else{
+                return "";
+            }
+        })
         .property('selected', d => d === selectedOption)
-        .text(d => d);
+        .text(d =>{
+            if(d!="comm" && d!="dso" && d!="symbol"){
+                return d;
+            }else{
+                return "";
+            }
+        });
+    
 }
 
 const scatterPlot = (parameters, props) => {
